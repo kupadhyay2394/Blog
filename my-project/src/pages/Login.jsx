@@ -27,6 +27,8 @@ export default function Login() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
+      console.log(res);
+      
 
       const data = await res.json();
       console.log("Login response:", data);
