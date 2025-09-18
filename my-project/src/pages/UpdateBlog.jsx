@@ -1,160 +1,122 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from "../context/AuthContext"; 
+import { useAuth } from "../context/AuthContext";
+import { updatePost, getPostById } from "../api"; // Import API functions
 
 function UpdateBlog() {
-  // 1. Get the blogId (always reliable) and hooks
+    const { id: blogId } = useParams(); // Get blogId from URL parameters
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { token } = useAuth();
 
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { token } = useAuth();
-  
-  // Extract postData from the navigation state (only available on initial click)
-  const passedPostData = location.state?.postData;
-    console.log(`post fata${passedPostData._id}`);
-    const blogId= passedPostData._id;
-    console.log(`blogId${blogId}`);
-    
-    
-    
-  
-  console.log(`data ${passedPostData ? 'loaded' : 'missing'}`);
-  // FIX: Use blogId from useParams for logging the ID
-  console.log(`blogId from URL: ${blogId}`);
-  
-  
-  // State for form data and UI status
-  // Initialize state with passed data, if available.
-  const [title, setTitle] = useState(passedPostData?.title || '');
-  const [content, setContent] = useState(passedPostData?.content || '');
-  
-  // Loading is set to false immediately since we rely on passed data
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(null);
-  
-  // NOTE: The original useEffect for API fetching has been REMOVED as requested.
+    // State for form data and UI status
+    const [title, setTitle] = useState('');
+    const [content, setContent] = useState('');
+    const [loading, setLoading] = useState(true); // Start loading until data is fetched
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState(null);
 
-  // Use an effect to handle the scenario where the user refreshes or navigates directly
-  useEffect(() => {
-    // We only need to show an error if the user tries to edit without form data present
-    if (!passedPostData && !loading) {
-        console.error("Post data is missing. Please navigate from the post details page.");
-        setError("Post data is missing. Please return to the post details page and try again.");
-        // Optional: navigate('/', { replace: true });
-    }
-  }, [passedPostData, loading, navigate]);
+    // Effect to fetch post data if not passed via location state (e.g., on page refresh)
+    useEffect(() => {
+        const passedPostData = location.state?.postData;
 
+        if (passedPostData) {
+            setTitle(passedPostData.title);
+            setContent(passedPostData.content);
+            setLoading(false);
+        } else {
+            // Data not passed, so fetch from API
+            console.log("No post data passed in state, fetching from API...");
+            const fetchPost = async () => {
+                try {
+                    const result = await getPostById(blogId, token);
+                    setTitle(result.data.title);
+                    setContent(result.data.content);
+                } catch (err) {
+                    console.error("Failed to fetch post for editing:", err);
+                    setError("Could not load post data. Please try again.");
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchPost();
+        }
+    }, [blogId, token, location.state]);
 
-  // --- 3. Handle form submission (API Call for Update) ---
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Block submission if data was lost (i.e., form fields are empty after refresh/data loss)
-    if (!title || !content) {
-        setError("Cannot submit: Title or content is empty.");
-        return;
-    }
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
-    setSubmitting(true);
-    setError(null);
+        if (!title || !content) {
+            setError("Title and content cannot be empty.");
+            return;
+        }
 
-    const updatedPost = { title, content }; // Prepare the data payload
+        setSubmitting(true);
+        setError(null);
 
-    try {
-        
-      // Use 'blogId' from useParams() for the update API call
-      const res = await fetch(`https://blog-3-z37i.onrender.com/api/v1/post/updatepost/${blogId}`, {
-        method: 'PUT', // Use PUT or PATCH based on your API
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(updatedPost),
-      });
+        const updatedPost = { title, content };
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || 'Failed to update blog post.');
-      }
-      
-      // Success: Navigate back to the post detail page
-      navigate(`/PostDetails/${blogId}`); 
+        try {
+            await updatePost(blogId, updatedPost, token); // Use the centralized API function
+            navigate(`/PostDetails/${blogId}`);
+        } catch (err) {
+            console.error("Update error:", err);
+            setError(err.message);
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
+    if (loading) {
+        return <div className="p-8 text-center text-xl font-semibold text-gray-500">Loading editor...</div>;
+    }
 
-    } catch (err) {
-      console.error("Update error:", err);
-      setError(err.message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    if (error && !title && !content) {
+        return <div className="p-8 text-center text-xl font-semibold text-red-600">Error: {error}</div>;
+    }
 
-  // --- Render Logic ---
-
-  // Check for data loss error first (if the form is empty)
-  if (error && !title && !content) {
-    return <div className="p-8 text-center text-xl font-semibold text-red-600">Error: {error}</div>;
-  }
-  
-  if (loading) {
-    return <div className="p-8 text-center text-xl font-semibold text-gray-500">Initializing form...</div>;
-  }
-
-
-  return (
-    <div className="container mx-auto p-8 max-w-2xl">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">Update Post: ID {blogId}</h1>
-      <form onSubmit={handleSubmit} className="bg-white shadow-xl rounded-lg px-8 pt-6 pb-8 mb-4">
-        
-        {/* Title Field */}
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="title">Title</label>
-          <input
-            className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
-            id="title"
-            type="text"
-            placeholder="Blog Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            disabled={submitting || !title} 
-          />
-        </div>
-        
-        {/* Content Field */}
-        <div className="mb-6">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="content">Content</label>
-          <textarea
-            className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 h-64 resize-none"
-            id="content"
-            placeholder="Blog Content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            required
-            disabled={submitting || !content} 
-          ></textarea>
-        </div>
-        
-        {/* Submission Button and Error Display */}
-        <div className="flex items-center justify-between">
-          <button
-            className={`font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors ${
-                submitting || !title || !content 
-                ? 'bg-blue-400 cursor-not-allowed' 
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
-            }`}
-            type="submit"
-            disabled={submitting || !title || !content} 
-          >
-            {submitting ? 'Updating...' : 'Save Changes'}
-          </button>
-          
-          {error && submitting && <p className="text-red-500 text-sm font-medium">Error: {error}</p>}
-        </div>
-      </form>
-    </div>
-  );
+    return (
+        <div className="container mx-auto p-8 max-w-2xl">
+            <h1 className="text-3xl font-bold mb-6 text-gray-800">Update Post</h1>
+            <form onSubmit={handleSubmit} className="bg-white shadow-xl rounded-lg px-8 pt-6 pb-8 mb-4">
+                <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="title">Title</label>
+                    <input
+                        className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        id="title"
+                        type="text"
+                        placeholder="Blog Title"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        required
+                        disabled={submitting}
+                    />
+                </div>
+                <div className="mb-6">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="content">Content</label>
+                    <textarea
+                        className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 h-64 resize-y"
+                        id="content"
+                        placeholder="Blog Content"
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        required
+                        disabled={submitting}
+                    ></textarea>
+                </div>
+                <div className="flex items-center justify-between">
+                    <button
+                        className={`font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors ${submitting || !title || !content ? 'bg-blue-400 cursor-not-allowed text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                        type="submit"
+                        disabled={submitting || !title || !content}
+                    >
+                        {submitting ? 'Updating...' : 'Save Changes'}
+                    </button>
+                    {error && <p className="text-red-500 text-sm font-medium">Error: {error}</p>}
+                </div>
+            </form>
+        </div>
+    );
 }
 
 export default UpdateBlog;

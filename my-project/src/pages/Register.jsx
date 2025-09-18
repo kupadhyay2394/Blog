@@ -1,94 +1,89 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
+import { useNavigate } from "react-router-dom";
+import { registerUser } from "../api"; // Import the API function
 
 export default function Register() {
-  const { login } = useAuth();
-  const navigate = useNavigate(); // ✅ Initialize useNavigate hook
-  
-  const [form, setForm] = useState({
-    username: "",
-    fullName: "",
-    email: "",
-    password: "",
-  });
+    const { login } = useAuth();
+    const navigate = useNavigate();
 
-  // ✅ Single change handler for all inputs
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-  };
+    const [form, setForm] = useState({
+        username: "",
+        fullName: "",
+        email: "",
+        password: "",
+    });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    try {
-      const res = await fetch("https://blog-3-z37i.onrender.com/api/v1/users/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setForm({ ...form, [name]: value });
+    };
 
-      const data = await res.json();
-      console.log("Response from server:", data);
-      
-      if (res.ok && data.success) { // ✅ Check both res.ok and data.success
-        // Your backend returns `data.user` and `data.token`
-        login(data.data.user, data.data.accessToken); // ✅ Access the correct properties
-        navigate("/login"); // ✅ Redirect on success
-      } else {
-        alert(data.message || "Registration failed. Please try again.");
-      }
-    } catch (error) {
-      console.error("Registration error:", error);
-      alert("Registration failed due to a network or server error.");
-    }
-  };
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
-  return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-6 rounded shadow-md w-80"
-      >
-        <h2 className="text-xl font-bold mb-4">Register</h2>
-        
-        <input
-          type="text"
-          placeholder="Username"
-          className="w-full p-2 mb-3 border rounded"
-          name="username" // ✅ Add name attribute
-          value={form.username}
-          onChange={handleChange} // ✅ Use the single handler
-        />
-        <input
-          type="text"
-          placeholder="Full Name" // ✅ Better placeholder
-          className="w-full p-2 mb-3 border rounded"
-          name="fullName" // ✅ Add name attribute
-          value={form.fullName}
-          onChange={handleChange} // ✅ Use the single handler
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full p-2 mb-3 border rounded"
-          name="email" // ✅ Add name attribute
-          value={form.email}
-          onChange={handleChange} // ✅ Use the single handler
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full p-2 mb-3 border rounded"
-          name="password" // ✅ Add name attribute
-          value={form.password}
-          onChange={handleChange} // ✅ Use the single handler
-        />
-        <button type="submit" className="w-full bg-green-500 text-white py-2 rounded">
-          Register
-        </button>
-      </form>
-    </div>
-  );
+        try {
+            const data = await registerUser(form); // Use the centralized API function
+
+            if (data.success) {
+                // Log in the user automatically after successful registration
+                login(data.data.user, data.data.accessToken);
+                navigate("/"); // Redirect to home page
+            }
+        } catch (error) {
+            console.error("Registration error:", error);
+            alert(error.message || "Registration failed due to a network or server error.");
+        }
+    };
+
+    return (
+        <div className="flex justify-center items-center h-screen bg-gray-100">
+            <form
+                onSubmit={handleSubmit}
+                className="bg-white p-6 rounded shadow-md w-80"
+            >
+                <h2 className="text-xl font-bold mb-4">Register</h2>
+
+                <input
+                    type="text"
+                    placeholder="Username"
+                    className="w-full p-2 mb-3 border rounded"
+                    name="username"
+                    value={form.username}
+                    onChange={handleChange}
+                    required
+                />
+                <input
+                    type="text"
+                    placeholder="Full Name"
+                    className="w-full p-2 mb-3 border rounded"
+                    name="fullName"
+                    value={form.fullName}
+                    onChange={handleChange}
+                    required
+                />
+                <input
+                    type="email"
+                    placeholder="Email"
+                    className="w-full p-2 mb-3 border rounded"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                />
+                <input
+                    type="password"
+                    placeholder="Password"
+                    className="w-full p-2 mb-3 border rounded"
+                    name="password"
+                    value={form.password}
+                    onChange={handleChange}
+                    required
+                />
+                <button type="submit" className="w-full bg-green-500 text-white py-2 rounded">
+                    Register
+                </button>
+            </form>
+        </div>
+    );
 }

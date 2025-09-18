@@ -19,10 +19,7 @@ connectDB().then(()=>{
     console.log("Mongo db connention failed! ! !",err);
 })
 
-app.use(cors({
-    origin:process.env.CORS_ORIGIN,
-    credentials:true
-}))
+app.use(cors());
 
 app.use(express.json({limit:"16kb"}))                                           // to take input file of json
 app.use(express.urlencoded({extended:true}))                       // to take input from  url
