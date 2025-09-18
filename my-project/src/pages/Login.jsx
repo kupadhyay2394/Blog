@@ -22,7 +22,7 @@ export default function Login() {
 
     try {
       // NOTE: This is a placeholder for the actual login logic
-      const res = await fetch("http://localhost:8000/api/v1/users/login", {
+      const res = await fetch("https://blog-2-tt3h.onrender.com/api/v1/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

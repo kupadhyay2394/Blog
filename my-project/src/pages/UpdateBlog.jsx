@@ -64,7 +64,7 @@ function UpdateBlog() {
     try {
         
       // Use 'blogId' from useParams() for the update API call
-      const res = await fetch(`http://localhost:8000/api/v1/post/updatepost/${blogId}`, {
+      const res = await fetch(`https://blog-2-tt3h.onrender.com/api/v1/post/updatepost/${blogId}`, {
         method: 'PUT', // Use PUT or PATCH based on your API
         headers: {
           'Content-Type': 'application/json',

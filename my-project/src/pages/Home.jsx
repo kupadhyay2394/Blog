@@ -23,7 +23,7 @@ export default function Home() {
         return;
       }
       try {
-        const res = await fetch("http://localhost:8000/api/v1/post/getallpost", {
+        const res = await fetch("https://blog-2-tt3h.onrender.com/api/v1/post/getallpost", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

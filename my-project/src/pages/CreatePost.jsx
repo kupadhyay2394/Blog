@@ -87,7 +87,7 @@ export default function CreatePost() {
         setSubmissionStatus({ isSubmitting: true, error: null });
 
         try {
-            const res = await fetch("http://localhost:8000/api/v1/post/createpost", {
+            const res = await fetch("https://blog-2-tt3h.onrender.com/api/v1/post/createpost", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -96,7 +96,7 @@ export default function PostDetails() {
     setLikesCount(prev => (isLiked ? prev - 1 : prev + 1));
 
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/post/toggle-like/${id}`, {
+      const res = await fetch(`https://blog-2-tt3h.onrender.com/api/v1/post/toggle-like/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
