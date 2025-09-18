@@ -1,7 +1,7 @@
 // src/api.js
 
 // The base URL for your API. All requests will be prefixed with this.
-const BASE_URL = "http://localhost:8000/api/v1";
+const BASE_URL = "https://blog-3-z37i.onrender.com/api/v1";
 
 /**
  * A helper function to handle API requests, including setting headers,
