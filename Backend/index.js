@@ -7,12 +7,11 @@ const app = express();
 const dotenv= require('dotenv')
 dotenv.config();
 
-const allowedOrigins = [
-  'http://localhost:5173', // Your local frontend
-  'https://blog-tan-ten-50.vercel.app' // Your deployed Vercel URL
-];
 
-app.use(cors())
+app.use(cors({
+  origin: "*",   // allow all origins
+}));
+
 
 connectDB().then(()=>{
     app.on("error",(error)=>{
