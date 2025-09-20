@@ -12,21 +12,7 @@ const allowedOrigins = [
   'https://blog-tan-ten-50.vercel.app' // Your deployed Vercel URL
 ];
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    // The 'origin' is the URL of the site making the request (e.g., your Vercel app)
-    // Allow requests with no origin (like mobile apps or Postman)
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  }
-};
-
-// Use the configured cors options
-app.use(cors(corsOptions));
-
+app.use(cors())
 
 connectDB().then(()=>{
     app.on("error",(error)=>{
